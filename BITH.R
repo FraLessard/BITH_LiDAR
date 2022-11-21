@@ -1,12 +1,12 @@
 # ------------------------------------------------------------------------------
-# CrÈe par Francis Lessard dans le cadre du projet portant sur la cartographie
-# de l'habitat de la Grive de Bicknell avec la Fondation de la faune QuÈbec et
-# l'universitÈ Laval
-# Mis ‡ jour le 2022-01-20
+# Cr√©e par Francis Lessard dans le cadre du projet portant sur la cartographie
+# de l'habitat de la Grive de Bicknell avec la Fondation de la faune Qu√©bec et
+# l'universit√© Laval
+# Mis √† jour le 2022-01-20
 
 # Ce script permet d'effectuer une resource selection function (RSF) selon
-# plusieurs modËles candidats (rÈgression logistique) ayant ÈtÈ soumis ‡ un AIC.
-# Le meilleur modËle ‡ ÈtÈ sÈlectionnÈ pour effectuer une prÈdiction.
+# plusieurs mod√®les candidats (r√©gression logistique) ayant √©t√© soumis √† un AIC.
+# Le meilleur mod√®le √† √©t√© s√©lectionn√© pour effectuer une pr√©diction.
 # ------------------------------------------------------------------------------
 
 # Installation des modules ====
@@ -26,8 +26,8 @@ library(pROC)
 
 
 
-# Lecture des donnÈes finales ====
-# DonnÈes de prÈsence-absence
+# Lecture des donn√©es finales ====
+# Donn√©es de pr√©sence-absence
 st_read("D:/02_data_bird/presence_absence_data.shp") %>%
   mutate(GRBI = GRBI %>% factor) %>% 
   dplyr::select(GRBI,
@@ -42,8 +42,8 @@ st_read("D:/02_data_bird/presence_absence_data.shp") %>%
 
 
 
-# Visualisation (matrice de corrÈlation, boxplot, pca) ====
-# Matrice de corrÈlation
+# Visualisation (matrice de corr√©lation, boxplot, pca) ====
+# Matrice de corr√©lation
 jpeg("C:/0_Donnees/03_Projets/03_GRBI/Rapports/Article/Figures/corrplot.jpg",width=800, height=800)
 data %>% 
   st_drop_geometry %>%  
@@ -73,9 +73,9 @@ dev.off()
 
 # PCA
 data %>%
-  dplyr::select(chm_corr = mhcmean_corr, var_corr, elevation = altitude, pbalsamfir = psab, ufcgap) %>% # SÈlection des variables du meilleur modËles
+  dplyr::select(chm_corr = mhcmean_corr, var_corr, elevation = altitude, pbalsamfir = psab, ufcgap) %>% # S√©lection des variables du meilleur mod√®les
   st_drop_geometry %>% 
-  drop_na %>% # ¿ corriger plus tard dans la bd originale pour ne pas avoir de mÈtrique NA
+  drop_na %>% # √Ä corriger plus tard dans la bd originale pour ne pas avoir de m√©trique NA
   prcomp(scale = TRUE) -> PCA
 plot(PCA, col = "red")
 summary(PCA)
@@ -98,9 +98,9 @@ dev.off()
 
 
 
-# AICc et sÈlection du meilleur modËle et prÈdiction ====
-# Creation des Èquations
-# Autre maniËre d'Ècrire le terme quadratique : poly(mhcmean_corr, degree=2, raw=TRUE) vs. mhcmean_corr + I(mhcmean_corr^2)
+# AICc et s√©lection du meilleur mod√®le et pr√©diction ====
+# Creation des √©quations
+# Autre mani√®re d'√©crire le terme quadratique : poly(mhcmean_corr, degree=2, raw=TRUE) vs. mhcmean_corr + I(mhcmean_corr^2)
 equation <- c(GRBI ~ altitude + mhcmean_corr + I(mhcmean_corr^2) + var_corr + ufcgap + psab, # 1
               GRBI ~ altitude + mhcmean_corr + I(mhcmean_corr^2) + var_corr + ufcgap, # 2
               GRBI ~ altitude + mhcmean_corr + I(mhcmean_corr^2) + ufcgap + psab, # 3
@@ -109,7 +109,7 @@ equation <- c(GRBI ~ altitude + mhcmean_corr + I(mhcmean_corr^2) + var_corr + uf
               GRBI ~ altitude + mhcmean_corr + I(mhcmean_corr^2) + var_corr, # 6
               GRBI ~ 1) # 7
 
-# CrÈation de tous les modËles
+# Cr√©ation de tous les mod√®les
 for(id in seq_along(equation)){
   assign(paste0("mod_", id),
          glm(formula = equation[[id]],
@@ -122,25 +122,25 @@ mget(ls(pattern = "mod_\\d+")) %>%
   aictab(second.ord = FALSE) -> table_aicc
 table_aicc
 
-# Permet d'aller chercher le meilleur modËle
+# Permet d'aller chercher le meilleur mod√®le
 mod <- get(table_aicc %>% slice(1) %>% pull(1))
-# Pour garder les p.values et faire un tableau rÈsumÈ
+# Pour garder les p.values et faire un tableau r√©sum√©
 summary(mod)
 
-# PrÈdiction
+# Pr√©diction
 predict(mod, data, type = "response") -> data$predict
 
 
 
 
 
-# Pour visualiser la relation des variables et si certaines ont des effets non linÈaires ====
+# Pour visualiser la relation des variables et si certaines ont des effets non lin√©aires ====
 for(v in c("mhcmean_corr", "var_corr", "altitude", "psab", "ufcgap")){
   print(data %>% 
     rename(var = v) %>% 
     ggplot(aes(var, predict)) +
     xlab(label = v) +
-    ylab(label = "ProbabilitÈ de prÈsence") +
+    ylab(label = "Probabilit√© de pr√©sence") +
     geom_point() +
     geom_smooth())
 }
@@ -149,8 +149,8 @@ for(v in c("mhcmean_corr", "var_corr", "altitude", "psab", "ufcgap")){
 
 
 
-# Seuillage (80 % sensibilitÈ et spÈcificitÈ) ====
-# Permet de trouver les seuils optimaux selon diffÈrents paramËtres de performance (fonction "optimal.thresholds")
+# Seuillage (80 % sensibilit√© et sp√©cificit√©) ====
+# Permet de trouver les seuils optimaux selon diff√©rents param√®tres de performance (fonction "optimal.thresholds")
 data %>%
   st_drop_geometry %>%   
   mutate(ID = 1:nrow(data)) %>% 
@@ -161,12 +161,12 @@ data %>%
   optimal.thresholds(req.sens = 0.80, req.spec = 0.80) -> seuils
 seuils
 
-# 80 % sensibilitÈ
+# 80 % sensibilit√©
 ifelse(data$predict > seuils[10,2], 1, 0) %>% 
   as.factor %>% 
   confusionMatrix(data=., reference=data$GRBI, positive = "1")
 
-# 80 % spÈcificitÈ
+# 80 % sp√©cificit√©
 ifelse(data$predict > seuils[11,2], 1, 0) %>% 
   as.factor %>% 
   confusionMatrix(data=., reference=data$GRBI, positive = "1")
@@ -175,7 +175,7 @@ ifelse(data$predict > seuils[11,2], 1, 0) %>%
 
 
 
-# ROC-AUC prÈsence et pseudo absence (dispositif de calibration) ====
+# ROC-AUC pr√©sence et pseudo absence (dispositif de calibration) ====
 jpeg("C:/0_Donnees/03_Projets/03_GRBI/Rapports/Article/Figures/ROC_AUC_presence_pseudoabsence.jpg",width=800, height=800)
 par(pty = "s") # Pour ajuster la largeur du graphique sur l'axe des x
 roc(data$GRBI, data$predict) %>% 
@@ -191,76 +191,76 @@ dev.off()
 
 
 
-# # PrÈdiction du modËle au niveau des points d'Ècoute (avec une correction de la hauteur des arbres) / ‡ faire une seule fois ====
-# # Raster stack des mÈtriques
+# # Pr√©diction du mod√®le au niveau des points d'√©coute (avec une correction de la hauteur des arbres) / √† faire une seule fois ====
+# # Raster stack des m√©triques
 # setwd("D:/04_metriques/04_projet_fill")
-# coef(mod) # Pour voir si toutes les mÈtriques sont prÈsentes
+# coef(mod) # Pour voir si toutes les m√©triques sont pr√©sentes
 # stack(raster("altitude.tif"),
 #       raster("mhcmean.tif"),
 #       raster("ufcgap.tif"),
 #       raster("psab.tif"),
 #       raster("D:/01_data_autre/index_lidar_10m.tif"),
 #       raster("D:/01_data_autre/aah_id_10m.tif")) -> metriques
-# # Lecture des polygones Ècoforestiers avec la courbe de croissance (aah0 = aah1)
+# # Lecture des polygones √©coforestiers avec la courbe de croissance (aah0 = aah1)
 # st_read("D:/01_data_autre/Data.gdb", "AAH") %>% 
 #   st_drop_geometry %>% 
 #   dplyr::select(-SHAPE_Length, -SHAPE_Area) %>% 
 #   mutate(aah_id_10m = ID) -> AAH
 # 
-# # Lecture des points d'Ècoute
+# # Lecture des points d'√©coute
 # st_read("D:/02_data_bird/validation.shp") %>% 
 #   mutate(GRBI = GRBI %>% as.factor) -> pointcounts
 # 
-# for(i in 1:nrow(pointcounts)){ # ItÈration d'un point d'Ècoute pour la correction du mhc puis la prÈdiction
-#   cat(paste0("Points d'Ècoute no. ",i, "\n"))
+# for(i in 1:nrow(pointcounts)){ # It√©ration d'un point d'√©coute pour la correction du mhc puis la pr√©diction
+#   cat(paste0("Points d'√©coute no. ",i, "\n"))
 #   pointcounts %>% 
-#     slice(i) %>% # Extraction d'un point d'Ècoute
+#     slice(i) %>% # Extraction d'un point d'√©coute
 #     st_buffer(50) -> pointcountsbuffer # Buffer de 50 m
 #   
 #   metriques %>% 
-#     crop(extent(pointcountsbuffer)) %>% # …tendue des mÈtriques du point d'Ècoute buffer 50
-#     mask(pointcountsbuffer) -> metriques_pcb # Masque des mÈtriques du point d'Ècoute buffer 50
+#     crop(extent(pointcountsbuffer)) %>% # √âtendue des m√©triques du point d'√©coute buffer 50
+#     mask(pointcountsbuffer) -> metriques_pcb # Masque des m√©triques du point d'√©coute buffer 50
 #   
 #   metriques_pcb %>% 
-#     raster::subset(c(2,5,6)) %>% # SÈlection du mÈtrique mhcmean de index_lidar_10m et de aah_id_10m
-#     as.data.frame(xy=TRUE) %>% # Conversion en dataframe avec les coordonnÈes
+#     raster::subset(c(2,5,6)) %>% # S√©lection du m√©trique mhcmean de index_lidar_10m et de aah_id_10m
+#     as.data.frame(xy=TRUE) %>% # Conversion en dataframe avec les coordonn√©es
 #     merge(AAH, by=c("aah_id_10m")) %>% # Jointure des courbes de croissance selon l'ID unique AAH (peuplement)
-#     mutate(decalage = pointcountsbuffer$decalage) %>% # DÈcalage du point d'Ècoute avec l'annÈe lidar
+#     mutate(decalage = pointcountsbuffer$decalage) %>% # D√©calage du point d'√©coute avec l'ann√©e lidar
 #     dplyr::select(-index_lidar_10m) -> mhcmean_pcb # Retrait de l'index lidar
 #   
 #   # Correction du mhc
-#   c <- 1 # ItÈrateur du nombre d'annÈes ‡ corriger
-#   while (!all(mhcmean_pcb$decalage == 0)) { # Tant que le dÈcalage n'est pas de 0
+#   c <- 1 # It√©rateur du nombre d'ann√©es √† corriger
+#   while (!all(mhcmean_pcb$decalage == 0)) { # Tant que le d√©calage n'est pas de 0
 #     cat(paste0("Passe no. ",c, "\n"))
 #     mhcmean_pcb %<>%
-#       rowwise %>% # Pour effectuer les manipulation une ligne ‡ la fois
+#       rowwise %>% # Pour effectuer les manipulation une ligne √† la fois
 #       mutate(grow = if(decalage != 0){ # Colonne d'accroissement
 #         mhcmean %>% round(0) -> mhc # Extraction de la hauteur d'arbre actuelle
-#         ifelse(mhc > 40, mhc <- 40, mhc <- mhc) # Si le mhc fait plus de 40 m, mettre la valeur de 40 comnme la courbe de croissance s'arrÍte ‡ cette hauteur
-#         ifelse(mhc == 0 & sign(decalage) == -1, 0, get(paste0("aah",mhc))) # Ne fait pas rÈduire le mhc s'il fait moins de 50 cm
+#         ifelse(mhc > 40, mhc <- 40, mhc <- mhc) # Si le mhc fait plus de 40 m, mettre la valeur de 40 comnme la courbe de croissance s'arr√™te √† cette hauteur
+#         ifelse(mhc == 0 & sign(decalage) == -1, 0, get(paste0("aah",mhc))) # Ne fait pas r√©duire le mhc s'il fait moins de 50 cm
 #       }else{
-#         0 # Ne fait pas changer le mhc s'il n'y a plus de dÈcalage
+#         0 # Ne fait pas changer le mhc s'il n'y a plus de d√©calage
 #       }) %>% 
-#       mutate(mhcmean = mhcmean+(grow*sign(decalage)/100)) %>% # Le mÈtrique est en m et le grow en cm d'o˘ le /100, le sign permet de rÈduire le mhc si cela s'applique
-#       mutate(decalage = if(decalage != 0){ # Le dÈcalage est-il diffÈrent de 0 ?
+#       mutate(mhcmean = mhcmean+(grow*sign(decalage)/100)) %>% # Le m√©trique est en m et le grow en cm d'o√π le /100, le sign permet de r√©duire le mhc si cela s'applique
+#       mutate(decalage = if(decalage != 0){ # Le d√©calage est-il diff√©rent de 0 ?
 #         decalage - 1*sign(decalage) # Si oui, le rapproche de 0 d'une valeur de 1 ans
 #       }else{
-#         0 # Sinon, mettre 0 comme valeur de dÈcalage
+#         0 # Sinon, mettre 0 comme valeur de d√©calage
 #       })
-#     c <- c + 1 # IncrÈmentation de l'itÈrateur du nombre d'annÈes ‡ corriger, une annÈe ‡ ÈtÈ effectuÈe
+#     c <- c + 1 # Incr√©mentation de l'it√©rateur du nombre d'ann√©es √† corriger, une ann√©e √† √©t√© effectu√©e
 #   }
 #   
 #   mhcmean_pcb %>% 
 #     dplyr::select(x, y, mhcmean) %>% 
 #     rasterFromXYZ(10, crs = 2949) %>% # Conversion en raster
-#     resample(metriques_pcb) -> metriques_pcb$mhcmean # Mise ‡ jour du mhc corrigÈ dans le raster stack
+#     resample(metriques_pcb) -> metriques_pcb$mhcmean # Mise √† jour du mhc corrig√© dans le raster stack
 #   
-#   names(metriques_pcb)[2] <- 'mhcmean_corr' # Mise ‡ jour du nom du mÈtrique mhcmean vers mhcmean_corr pour que le modËle fonctionne
-#   predict(metriques_pcb, mod, type = "response") %>% # PrÈdiction du modËle dans un rayon de 50 m
-#     {.@data@max} -> pointcounts$predict[[i]] # Extraction de la valeur la plus ÈlevÈe dans la BD
+#   names(metriques_pcb)[2] <- 'mhcmean_corr' # Mise √† jour du nom du m√©trique mhcmean vers mhcmean_corr pour que le mod√®le fonctionne
+#   predict(metriques_pcb, mod, type = "response") %>% # Pr√©diction du mod√®le dans un rayon de 50 m
+#     {.@data@max} -> pointcounts$predict[[i]] # Extraction de la valeur la plus √©lev√©e dans la BD
 # }
 # 
-# # …criture des points d'Ècoute avec la valeur de prÈdiction
+# # √âcriture des points d'√©coute avec la valeur de pr√©diction
 # pointcounts %>% 
 #   mutate(predict = predict %>% as.numeric())  %>% 
 #   mutate(GRBI = GRBI %>% as.factor) %>% 
@@ -270,31 +270,31 @@ dev.off()
 #
 #
 #
-# # Pour enlever les prÈsence avec 10 m de prÈcision des donnÈes de points d'Ècoute / ‡ faire une seule fois ====
-# # Lecture des points d'Ècoute avec la valeur de prÈdiction
+# # Pour enlever les pr√©sence avec 10 m de pr√©cision des donn√©es de points d'√©coute / √† faire une seule fois ====
+# # Lecture des points d'√©coute avec la valeur de pr√©diction
 # st_read("D:/02_data_bird/validation_predict.shp") %>% 
 #   mutate(GRBI = GRBI %>% as.factor) -> pointcounts
 # 
-# st_read("D:/02_data_bird/Donnees_Inventaire_Clip.shp") %>% # Points d'Ècoutes
-#   filter(abs(decalage) <= 5) %>% # Tri ‡ 5 ans du relevÈ lidar
-#   filter(GRBI > 0) -> presence_pe # Retrait des points d'Ècoute sans prÈsente de GRBI
+# st_read("D:/02_data_bird/Donnees_Inventaire_Clip.shp") %>% # Points d'√©coutes
+#   filter(abs(decalage) <= 5) %>% # Tri √† 5 ans du relev√© lidar
+#   filter(GRBI > 0) -> presence_pe # Retrait des points d'√©coute sans pr√©sente de GRBI
 # 
-# st_read("D:/02_data_bird/presence.shp") %>% # DonnÈes de prÈsence ‡ plus ou moins 10 m
+# st_read("D:/02_data_bird/presence.shp") %>% # Donn√©es de pr√©sence √† plus ou moins 10 m
 #   st_transform(crs = 2949) -> presence
 # 
-# drop <- list() # CrÈation d'une liste des doublons ‡ enlever
-# id <- 1 # ItÈrateur de la liste prÈcÈdente
-# for(i in 1:nrow(presence_pe)){ # Regarde les points d'Ècoute avec prÈsence de GRBI un ‡ un
+# drop <- list() # Cr√©ation d'une liste des doublons √† enlever
+# id <- 1 # It√©rateur de la liste pr√©c√©dente
+# for(i in 1:nrow(presence_pe)){ # Regarde les points d'√©coute avec pr√©sence de GRBI un √† un
 #   if(presence_pe %>%
 #      slice(i) %T>%
-#      {d <<- .$Date_} %>% # Garde en mÈmoire la date du point d'Ècoute
+#      {d <<- .$Date_} %>% # Garde en m√©moire la date du point d'√©coute
 #      st_buffer(110) %>%  # Buffer de 110 (plus grande distance de presence issue des azimuts)
-#      st_intersection(presence) %>%  # Le point d'Ècoute est-il ‡ moins de 110 m d'un point de prÈsence prÈcis?
-#      filter(date == d) %>% # PossËde-t-il la mÍme date?
-#      nrow > 0) { # S'il possËde la mÍme date le nrow sera de 1 car il sera conservÈ (plus grand que 0)
+#      st_intersection(presence) %>%  # Le point d'√©coute est-il √† moins de 110 m d'un point de pr√©sence pr√©cis?
+#      filter(date == d) %>% # Poss√®de-t-il la m√™me date?
+#      nrow > 0) { # S'il poss√®de la m√™me date le nrow sera de 1 car il sera conserv√© (plus grand que 0)
 #     cat(paste0(i," doublon\n"))
-#     presence_pe %>% slice(i) -> drop[[id]] # On garde donc en mÈmoire ce point d'Ècoute qui est un doublon et qu'il faudra enlever
-#     id <- id + 1 # L'itÈrateur de la bd de doublons est incrÈmentÈ
+#     presence_pe %>% slice(i) -> drop[[id]] # On garde donc en m√©moire ce point d'√©coute qui est un doublon et qu'il faudra enlever
+#     id <- id + 1 # L'it√©rateur de la bd de doublons est incr√©ment√©
 #   } else {
 #     cat(i," pas de doublon\n") # Rien si nrow == 0 car pas un doublon
 #   }
@@ -314,16 +314,16 @@ dev.off()
 # 
 #
 # Validation ====
-st_read("D:/02_data_bird/validation_predict_tri_600m.shp") %>% # Tri manuel des points d'Ècoute ‡ plus de 600 m
+st_read("D:/02_data_bird/validation_predict_tri_600m.shp") %>% # Tri manuel des points d'√©coute √† plus de 600 m
   mutate(GRBI = GRBI %>% as.factor) -> pointcounts
 
-# Raster de prÈdiction 2022 pour avoir les superficies
+# Raster de pr√©diction 2022 pour avoir les superficies
 raster("D:/05_predictions/prediction_AICc.tif") %>% 
   as.vector %>% 
   na.omit -> prediction_vector
   
 
-# DÈtermination des seuils et matrice de confusion
+# D√©termination des seuils et matrice de confusion
 pointcounts %>%
   st_drop_geometry %>%   
   mutate(ID = 1:nrow(pointcounts)) %>% 
@@ -345,7 +345,7 @@ pointcounts %>%
   {confusionMatrix(data=.$predict_class, reference=.$GRBI, positive = "1")}
 (sum(prediction_vector > 0.288)/100)/(length(prediction_vector)/100)*100
 
-# ROC-AUC prÈsence et pseudo absence (points d'Ècoute)
+# ROC-AUC pr√©sence et pseudo absence (points d'√©coute)
 jpeg("C:/0_Donnees/03_Projets/03_GRBI/Rapports/Article/Figures/ROC_AUC_pointcounts.jpg",width=800, height=800)
 par(pty = "s") # Pour ajuster la largeur du graphique sur l'axe des x
 roc(pointcounts$GRBI, pointcounts$predict) %>% 
